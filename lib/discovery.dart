@@ -14,7 +14,6 @@ typedef DiscoverResult<T> = Future<List<PrinterDiscovered<T>>>;
 
 Future<List<PrinterDiscovered>> discoverPrinters(
     {List<DiscoverResult Function()> modes = const [
-      discoverStarPrinter,
       UsbPrinterConnector.discoverPrinters,
       BluetoothPrinterConnector.discoverPrinters,
       TcpPrinterConnector.discoverPrinters
