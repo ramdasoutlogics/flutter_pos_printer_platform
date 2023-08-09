@@ -12,9 +12,11 @@ import android.os.Handler
 import android.util.Base64
 import android.util.Log
 import android.widget.Toast
+import androidx.core.content.ContextCompat.getSystemService
 import com.sersoluciones.flutter_pos_printer_platform.adapter.USBPrinterAdapter
 import java.nio.charset.Charset
 import java.util.*
+
 
 class USBPrinterService private constructor(private val mHandler: Handler) {
     private var mContext: Context? = null
@@ -29,19 +31,31 @@ class USBPrinterService private constructor(private val mHandler: Handler) {
             val action = intent.action
             if ((ACTION_USB_PERMISSION == action)) {
                 synchronized(this) {
-                    val usbDevice: UsbDevice? = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
-                    if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-                        Log.i(
-                            LOG_TAG,
-                            "Success get permission for device " + usbDevice!!.deviceId + ", vendor_id: " + usbDevice.vendorId + " product_id: " + usbDevice.productId
+                    val manager = getSystemService(context,UsbManager::class.java)
+                    val deviceList = manager?.deviceList
+                    val deviceIterator: Iterator<UsbDevice?>? = deviceList?.values?.iterator()
+                    while (deviceIterator!!.hasNext()) {
+                        val device = deviceIterator.next()
+                        Log.v(
+                            "data",
+                            intent.dataString.toString()
                         )
-                        mUsbDevice = usbDevice
+                        //mUsbDevice = device
                         mHandler.obtainMessage(STATE_USB_CONNECTED).sendToTarget()
-                    } else {
-                        Toast.makeText(context, "User refused to give USB device permission: " + usbDevice!!.deviceName, Toast.LENGTH_LONG)
-                            .show()
-                        mHandler.obtainMessage(STATE_USB_NONE).sendToTarget()
+                        // Your code here!
                     }
+//                    val usbDevice: UsbDevice? = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
+//                    if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
+//                        Log.i(
+//                            LOG_TAG,
+//                            "Success get permission for device " + usbDevice!!.deviceId + ", vendor_id: " + usbDevice.vendorId + " product_id: " + usbDevice.productId
+//                        )
+//
+//                    } else {
+//                        Toast.makeText(context, "User refused to give USB device permission: " + usbDevice!!.deviceName, Toast.LENGTH_LONG)
+//                            .show()
+//                        mHandler.obtainMessage(STATE_USB_NONE).sendToTarget()
+//                    }
                 }
             } else if ((UsbManager.ACTION_USB_DEVICE_DETACHED == action)) {
 
@@ -104,6 +118,7 @@ class USBPrinterService private constructor(private val mHandler: Handler) {
                         Log.v(LOG_TAG, "Request for device: vendor_id: " + usbDevice.vendorId + ", product_id: " + usbDevice.productId)
                         closeConnectionIfExists()
                         mUSBManager!!.requestPermission(usbDevice, mPermissionIndent)
+                        getInstance(mHandler).mUsbDevice = usbDevice
                         mHandler.obtainMessage(STATE_USB_CONNECTING).sendToTarget()
                         return true
                     }
